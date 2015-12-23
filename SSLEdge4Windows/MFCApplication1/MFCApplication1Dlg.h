@@ -38,7 +38,8 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
-
+	
+	LRESULT OnShowTask(WPARAM wParam, LPARAM lParam);
 
 public:
 	afx_msg void OnBnClickedOk();
@@ -47,7 +48,7 @@ public:
 	CButton check1;
 	afx_msg void OnBnClickedCheck1();
 	CEdit edit1;
-
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	void setSSLEdge(CString file, CString port);
 	void write2file(CString file, CString port);
 	DWORD GetProcessHandle(TCHAR *processname);
@@ -61,4 +62,5 @@ public:
 	afx_msg void OnBnClickedCheck2();
 	CButton check2;
 	map<string, DWORD> m_handlemap;
+	NOTIFYICONDATA m_nid;
 };

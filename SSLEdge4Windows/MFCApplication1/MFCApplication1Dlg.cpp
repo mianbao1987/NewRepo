@@ -14,7 +14,7 @@
 #define new DEBUG_NEW
 #endif
 
-
+#define WM_SHOWTASK (WM_USER +1)
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -74,10 +74,12 @@ BEGIN_MESSAGE_MAP(CMFCApplication1Dlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_WM_SIZE()
 	ON_BN_CLICKED(IDOK, &CMFCApplication1Dlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDCANCEL, &CMFCApplication1Dlg::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_CHECK1, &CMFCApplication1Dlg::OnBnClickedCheck1)
 	ON_BN_CLICKED(IDC_CHECK2, &CMFCApplication1Dlg::OnBnClickedCheck2)
+	ON_MESSAGE(WM_SHOWTASK, OnShowTask)
 END_MESSAGE_MAP()
 
 
@@ -131,6 +133,16 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 	combo2.InsertString(5, "ssledge-tls-socks");
 	combo2.SetCurSel(1);
 	edit2.SetWindowTextA("16809");
+
+	//---------------------------托盘显示---------------------------------//
+	m_nid.cbSize = (DWORD)sizeof(NOTIFYICONDATA);
+	m_nid.hWnd = this->m_hWnd;
+	m_nid.uID = IDR_MAINFRAME;
+	m_nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+	m_nid.uCallbackMessage = WM_SHOWTASK;             // 自定义的消息名称
+	m_nid.hIcon = LoadIcon(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
+	strcpy_s(m_nid.szTip,12,"SSLEdge");                // 信息提示条为"服务器程序"，VS2008 UNICODE编码用wcscpy_s()函数
+	Shell_NotifyIcon(NIM_ADD, &m_nid);                // 在托盘区添加图标
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -189,7 +201,7 @@ HCURSOR CMFCApplication1Dlg::OnQueryDragIcon()
 void CMFCApplication1Dlg::OnBnClickedOk()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	
+	this->OnSize(SIZE_MINIMIZED, 0, 0);
 }
 
 
@@ -197,6 +209,7 @@ void CMFCApplication1Dlg::OnBnClickedCancel()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	system("taskkill /F /IM ssledge-term.exe");
+	Shell_NotifyIcon(NIM_DELETE, &m_nid);
 	CDialogEx::OnCancel();
 }
 
@@ -231,6 +244,8 @@ void CMFCApplication1Dlg::OnBnClickedCheck1()
 		setSSLEdge(filename, port);
 		Sleep(100);
 		m_handlemap["check1"] = GetProcessHandle("ssledge-term.exe");
+		//min size
+		this->OnSize(SIZE_MINIMIZED,0,0);
 	}
 }
 
@@ -379,5 +394,45 @@ void CMFCApplication1Dlg::OnBnClickedCheck2()
 		setSSLEdge(filename, port);
 		Sleep(100);
 		m_handlemap["check2"] = GetProcessHandle("ssledge-term.exe");
+		this->OnSize(SIZE_MINIMIZED, 0, 0);
+	}
+}
+
+
+LRESULT CMFCApplication1Dlg::OnShowTask(WPARAM wParam, LPARAM lParam)
+{
+	if (wParam != IDR_MAINFRAME)
+		return 1;
+	switch (lParam)
+	{
+	case WM_RBUTTONUP:                                        // 右键起来时弹出菜单
+		{
+			LPPOINT lpoint = new tagPOINT;
+			::GetCursorPos(lpoint);                    // 得到鼠标位置
+			CMenu menu;
+			menu.CreatePopupMenu();                    // 声明一个弹出式菜单
+			menu.AppendMenu(MF_STRING, WM_DESTROY, "关闭");
+			menu.TrackPopupMenu(TPM_LEFTALIGN, lpoint->x, lpoint->y, this);
+			HMENU hmenu = menu.Detach();
+			menu.DestroyMenu();
+			delete lpoint;
+		}
+		break;
+	case WM_LBUTTONDBLCLK:                                 // 双击左键的处理
+		{
+			this->ShowWindow(SW_SHOWNORMAL);         // 显示主窗口
+		}
+		break;
+	}
+	return 0;
+}
+
+void CMFCApplication1Dlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialog::OnSize(nType, cx, cy);
+	// TODO: Add your message handler code here
+	if (nType == SIZE_MINIMIZED)
+	{
+		ShowWindow(SW_HIDE); // 当最小化市，隐藏主窗口              
 	}
 }

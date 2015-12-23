@@ -28,7 +28,6 @@ void FileList::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(FileList, CDialogEx)
+	ON_WM_SIZE()
+//	ON_WM_DESTROY()
 END_MESSAGE_MAP()
-
-
-// FileList 消息处理程序
